@@ -1,23 +1,35 @@
-﻿using Xamarin.Forms;
+﻿using System.Collections.Generic;
+using Xamarin.Forms;
 
 namespace XamarinSample
 {
     public partial class MainPage : ContentPage
     {
+        RestService _restService;
+
         public MainPage()
         {
             InitializeComponent();
+
+            _restService = new RestService();
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            collectionView.ItemsSource = await App.Database.GetUserAsync();
+            dbView.ItemsSource = await App.Database.GetUserAsync();
 
             name.Text = (Application.Current as App).DisplayText;
         }
 
-        async void Button_Clicked(System.Object sender, System.EventArgs e)
+        //Application.Currentへ入力データの一時保管
+        void userID_Completed(System.Object sender, System.EventArgs e)
+        {
+            (Application.Current as App).DisplayText = name.Text;
+        }
+
+        //ローカルDatabaseへの保管
+        async void DatabaseRegister_Clicked(System.Object sender, System.EventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(name.Text) && !string.IsNullOrWhiteSpace(age.Text))
             {
@@ -26,12 +38,16 @@ namespace XamarinSample
                     Name = name.Text,
                     Age = int.Parse(age.Text)
                 });
+
+                dbView.ItemsSource = await App.Database.GetUserAsync();
             }
         }
 
-        void userID_Completed(System.Object sender, System.EventArgs e)
+        //REST APIの呼び出し
+        async void GetRepository_Clicked(System.Object sender, System.EventArgs e)
         {
-            (Application.Current as App).DisplayText = name.Text;
+            List<Repository> repositories = await _restService.GetRepositoriesAsync(Constants.GitHubReposEndpoint);
+            RepoView.ItemsSource = repositories;
         }
     }
 }
